@@ -1,0 +1,33 @@
+  services:
+
+    postgres:
+      image: postgres:16
+      container_name: gst-postgres
+      environment:
+        POSTGRES_USER: gst
+        POSTGRES_PASSWORD: gst123
+        POSTGRES_DB: refunddb
+      ports:
+        - "5432:5432"
+      volumes:
+        - gst-pgdata:/var/lib/postgresql/data
+      healthcheck:
+        test: [ "CMD-SHELL", "pg_isready -U gst -d refunddb" ]
+        interval: 5s
+        retries: 10
+
+    refund-api:
+      build: .
+      image: refund-api:1.0
+      container_name: refund-api
+      ports:
+        - "8080:8080"
+      environment:
+        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/refunddb
+      depends_on:
+        postgres:
+          condition: service_healthy
+
+  volumes:
+    gst-pgdata:
+      external: true
